@@ -1,3 +1,4 @@
+// src/pages/ExplorerPage.tsx
 import { useEffect, useRef, useState } from "react";
 import { getLanguages, synthesize, type Language } from "../lib/api";
 import { useApp } from "../store/app";
@@ -7,18 +8,17 @@ import { useNavigate } from "react-router-dom";
 export default function ExplorerPage() {
   const { voiceId, setLastAudioUrl } = useApp();
   const [langs, setLangs] = useState<Language[]>([]);
-  const [lang, setLang] = useState<string>(""); // always string
+  const [lang, setLang] = useState<string>(""); // always a string
   const [text, setText] = useState("你好，欢迎来到克利夫兰公共图书馆！");
   const [audioUrl, setAudioUrl] = useState<string>("");
   const prevUrlRef = useRef<string | undefined>(undefined);
-
   const nav = useNavigate();
 
   useEffect(() => {
     getLanguages()
       .then((ls) => {
         setLangs(ls);
-        if (ls[0]) setLang(ls[0].code);
+        setLang(ls[0]?.code ?? "zh"); // ensure string
       })
       .catch(() => setLangs([]));
   }, []);
@@ -34,7 +34,7 @@ export default function ExplorerPage() {
     );
 
   async function go() {
-    const code = lang || langs[0]?.code || "zh"; // fallback to a valid string
+    const code = lang || langs[0]?.code || "zh"; // safe fallback
     const blob = await synthesize({ text, languageCode: code, voiceId });
     if (prevUrlRef.current) URL.revokeObjectURL(prevUrlRef.current);
     const url = URL.createObjectURL(blob);
@@ -55,7 +55,7 @@ export default function ExplorerPage() {
       <div className="flex flex-col sm:flex-row gap-3">
         <select
           className="border rounded p-2"
-          value={lang}
+          value={lang} // <-- always a string
           onChange={(e) => setLang(e.target.value)}
           disabled={!langs.length}
         >

@@ -1,20 +1,29 @@
+// src/hooks/useAudioAnalyser.ts
 import { useEffect, useRef } from "react";
 
 export function useAudioAnalyser(stream?: MediaStream) {
   const audioCtxRef = useRef<AudioContext | null>(null);
   const analyserRef = useRef<AnalyserNode | null>(null);
-  const dataRef = useRef<Uint8Array>(new Uint8Array(0));
+  // Assert the backing buffer to ArrayBuffer so TS is happy across DOM lib versions
+  const dataRef = useRef<Uint8Array & { buffer: ArrayBuffer }>(
+    new Uint8Array(0) as any
+  );
 
   useEffect(() => {
     if (!stream) return;
-    const ctx = new (window.AudioContext ||
-      (window as any).webkitAudioContext)();
+
+    const Ctx = (window.AudioContext ||
+      (window as any).webkitAudioContext) as typeof AudioContext;
+    const ctx = new Ctx();
     const source = ctx.createMediaStreamSource(stream);
     const analyser = ctx.createAnalyser();
     analyser.fftSize = 256;
-    dataRef.current = new Uint8Array(analyser.frequencyBinCount);
-    source.connect(analyser);
 
+    // Create a fresh Uint8Array and assert its buffer type to ArrayBuffer
+    const arr = new Uint8Array(analyser.frequencyBinCount) as any;
+    dataRef.current = arr;
+
+    source.connect(analyser);
     audioCtxRef.current = ctx;
     analyserRef.current = analyser;
 
@@ -34,9 +43,11 @@ export function useAudioAnalyser(stream?: MediaStream) {
   return {
     getByteTimeDomainData: () => {
       const analyser = analyserRef.current;
-      if (!analyser || dataRef.current.length === 0) return undefined;
-      analyser.getByteTimeDomainData(dataRef.current); // expects Uint8Array
-      return dataRef.current;
+      const arr = dataRef.current;
+      if (!analyser || !arr || arr.length === 0) return undefined;
+      // TS now sees Uint8Array with ArrayBuffer backing → OK
+      analyser.getByteTimeDomainData(arr);
+      return arr as Uint8Array;
     },
   };
 }
