@@ -1,26 +1,29 @@
 import { useEffect, useRef, useState } from "react";
 
+// Normalize ArrayBuffer | SharedArrayBuffer → ArrayBuffer
+function toArrayBuffer(data: ArrayBuffer | ArrayBufferLike): ArrayBuffer {
+  if (data instanceof ArrayBuffer) return data.slice(0); // detach copy
+  const src = new Uint8Array(data as ArrayBufferLike);
+  const buf = new ArrayBuffer(src.byteLength);
+  new Uint8Array(buf).set(src); // copy
+  return buf;
+}
+
 async function decodeChunk(
   ctx: AudioContext,
-  chunk: ArrayBuffer
+  chunk: ArrayBuffer | ArrayBufferLike
 ): Promise<AudioBuffer> {
-  // Normalize to ArrayBuffer for decodeAudioData
-  const ab =
-    chunk instanceof ArrayBuffer
-      ? chunk
-      : new Uint8Array(chunk as ArrayBufferLike).buffer;
-  // copy to detach from underlying ArrayBuffer
-  return await ctx.decodeAudioData(ab.slice(0));
+  const ab = toArrayBuffer(chunk);
+  return await ctx.decodeAudioData(ab);
 }
 
 export default function StreamingPlayer({
   source,
 }: {
-  source: AsyncIterable<ArrayBuffer>;
+  source: AsyncIterable<ArrayBuffer | ArrayBufferLike>;
 }) {
   const [started, setStarted] = useState(false);
   const ctxRef = useRef<AudioContext | null>(null);
-  const queueRef = useRef<number>(0);
 
   useEffect(() => {
     let cancelled = false;
@@ -37,29 +40,29 @@ export default function StreamingPlayer({
           const node = ctx.createBufferSource();
           node.buffer = buf;
           node.connect(ctx.destination);
-          const dur = buf.duration;
           node.start(t);
-          t += dur; // chain
-          queueRef.current++;
+          t += buf.duration;
           if (!started) setStarted(true);
-        } catch {}
+        } catch {
+          // ignore decode hiccups in mock stream
+        }
       }
     }
     run();
+
     return () => {
       cancelled = true;
-      ctx.close();
+      ctx.close().catch(() => {});
     };
-  }, [source]);
+  }, [source, started]);
 
   return (
     <div className="w-full">
       <div className="text-sm opacity-80 mb-2">
         {started ? "Streaming…" : "Preparing stream…"}
       </div>
-      {/* Visual placeholder; playback is via AudioContext */}
       <div className="h-2 w-full bg-neutral-800 rounded-full overflow-hidden">
-        <div className="h-full bg-white animate-pulse"></div>
+        <div className="h-full bg-white animate-pulse" />
       </div>
     </div>
   );
