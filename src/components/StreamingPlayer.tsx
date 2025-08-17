@@ -1,22 +1,36 @@
 import { useEffect, useRef, useState } from "react";
 
-async function decodeChunk(ctx: AudioContext, chunk: ArrayBuffer): Promise<AudioBuffer> {
-  return await ctx.decodeAudioData(chunk.slice(0)); // slice to detach
+async function decodeChunk(
+  ctx: AudioContext,
+  chunk: ArrayBuffer
+): Promise<AudioBuffer> {
+  // Normalize to ArrayBuffer for decodeAudioData
+  const ab =
+    chunk instanceof ArrayBuffer
+      ? chunk
+      : new Uint8Array(chunk as ArrayBufferLike).buffer;
+  // copy to detach from underlying ArrayBuffer
+  return await ctx.decodeAudioData(ab.slice(0));
 }
 
-export default function StreamingPlayer({ source }: { source: AsyncIterable<ArrayBuffer> }){
+export default function StreamingPlayer({
+  source,
+}: {
+  source: AsyncIterable<ArrayBuffer>;
+}) {
   const [started, setStarted] = useState(false);
   const ctxRef = useRef<AudioContext | null>(null);
   const queueRef = useRef<number>(0);
 
-  useEffect(()=>{
+  useEffect(() => {
     let cancelled = false;
-    const ctx = new (window.AudioContext || (window as any).webkitAudioContext)();
+    const ctx = new (window.AudioContext ||
+      (window as any).webkitAudioContext)();
     ctxRef.current = ctx;
 
-    async function run(){
+    async function run() {
       let t = ctx.currentTime + 0.1;
-      for await (const chunk of source){
+      for await (const chunk of source) {
         if (cancelled) break;
         try {
           const buf = await decodeChunk(ctx, chunk);
@@ -32,12 +46,17 @@ export default function StreamingPlayer({ source }: { source: AsyncIterable<Arra
       }
     }
     run();
-    return () => { cancelled = true; ctx.close(); };
+    return () => {
+      cancelled = true;
+      ctx.close();
+    };
   }, [source]);
 
   return (
     <div className="w-full">
-      <div className="text-sm opacity-80 mb-2">{started ? "Streaming…" : "Preparing stream…"}</div>
+      <div className="text-sm opacity-80 mb-2">
+        {started ? "Streaming…" : "Preparing stream…"}
+      </div>
       {/* Visual placeholder; playback is via AudioContext */}
       <div className="h-2 w-full bg-neutral-800 rounded-full overflow-hidden">
         <div className="h-full bg-white animate-pulse"></div>
