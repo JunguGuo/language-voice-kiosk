@@ -1,0 +1,21 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+html, body, #root { height: 100%; }
+:root { color-scheme: dark; }
+body { @apply bg-neutral-950 text-neutral-100; }
+a { @apply underline-offset-2; }
+.btn {
+  @apply inline-flex items-center justify-center px-5 py-3 rounded-2xl font-medium tracking-wide transition;
+}
+.btn-primary {
+  @apply bg-white text-black hover:bg-neutral-200;
+}
+.btn-ghost {
+  @apply bg-neutral-800 hover:bg-neutral-700;
+}
+.card {
+  @apply rounded-2xl bg-neutral-900/70 border border-neutral-800 p-5;
+}
+h1,h2,h3 { @apply tracking-tight; }
