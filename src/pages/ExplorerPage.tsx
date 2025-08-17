@@ -33,11 +33,16 @@ export default function ExplorerPage() {
     );
 
   async function go() {
-    const code = lang || langs[0]?.code || "zh"; // safe fallback
-    const blob = await synthesize({ text, languageCode: code, voiceId });
-    if (prevUrlRef.current) URL.revokeObjectURL(prevUrlRef.current);
+    // Guard here so TS knows it's defined in this scope
+    if (!voiceId) {
+      nav("/capture");
+      return;
+    }
+    const vid = voiceId; // now narrowed to string
+
+    const code = lang || langs[0]?.code || "zh";
+    const blob = await synthesize({ text, languageCode: code, voiceId: vid });
     const url = URL.createObjectURL(blob);
-    prevUrlRef.current = url;
     setAudioUrl(url);
     setLastAudioUrl(url);
   }
