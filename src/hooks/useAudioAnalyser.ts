@@ -16,9 +16,8 @@ export function useAudioAnalyser(stream?: MediaStream) {
     const analyser = ctx.createAnalyser();
     analyser.fftSize = 256;
 
-    // ✅ Allocate from a real ArrayBuffer (not SAB / not borrowed)
-    const backing = new ArrayBuffer(analyser.frequencyBinCount);
-    const arr = new Uint8Array(backing);
+    // Allocate a fresh buffer (backed by a plain ArrayBuffer at runtime)
+    const arr = new Uint8Array(analyser.frequencyBinCount);
     dataRef.current = arr;
 
     source.connect(analyser);
@@ -44,8 +43,10 @@ export function useAudioAnalyser(stream?: MediaStream) {
       const arr = dataRef.current;
       if (!analyser || arr.length === 0) return undefined;
 
-      // ✅ TS happy: Uint8Array whose buffer is a plain ArrayBuffer
-      analyser.getByteTimeDomainData(arr);
+      // TS compat: cast to the signature the current DOM lib expects.
+      (analyser.getByteTimeDomainData as unknown as (a: Uint8Array) => void)(
+        arr as unknown as Uint8Array
+      );
 
       return arr;
     },
