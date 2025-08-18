@@ -1,21 +1,28 @@
-import type { VercelRequest, VercelResponse } from "@vercel/node";
+// api/ivc-create.ts
+import { Buffer } from "node:buffer";
 
 const ELEVEN = "https://api.elevenlabs.io/v1";
 const KEY = process.env.ELEVENLABS_API_KEY!;
 if (!KEY) throw new Error("Missing ELEVENLABS_API_KEY");
 
-export default async function handler(req: VercelRequest, res: VercelResponse) {
+export default async function handler(req: any, res: any) {
+  // CORS / preflight
+  res.setHeader("Access-Control-Allow-Origin", "*");
+  res.setHeader("Access-Control-Allow-Headers", "Content-Type");
+  res.setHeader("Access-Control-Allow-Methods", "POST, OPTIONS");
+  if (req.method === "OPTIONS") return res.status(204).end();
   if (req.method !== "POST") return res.status(405).end("Method Not Allowed");
 
-  const { name, description, labels, removeBackgroundNoise, files } =
-    req.body ?? {};
+  const body =
+    typeof req.body === "string" ? JSON.parse(req.body) : req.body ?? {};
+  const { name, description, labels, removeBackgroundNoise, files } = body;
+
   if (!name || !Array.isArray(files) || files.length === 0) {
     return res
       .status(400)
       .json({ error: "name and files[] (base64) required" });
   }
 
-  // Node-compatible FormData (global in Node 18+ on Vercel)
   const form = new FormData();
   form.append("name", name);
   if (description) form.append("description", description);
@@ -25,8 +32,10 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   }
 
   for (const f of files) {
-    const buffer = Buffer.from(f.base64, "base64");
-    form.append("files", new Blob([buffer]), f.filename || "sample.mp3");
+    const bytes = Buffer.from(f.base64, "base64");
+    // Node 18+ has Blob; File is not required by ElevenLabs here
+    const blob = new Blob([bytes], { type: f.contentType || "audio/mpeg" });
+    form.append("files", blob, f.filename || "sample.mp3"); // filename via 3rd arg
   }
 
   const up = await fetch(`${ELEVEN}/voices/ivc/create`, {
@@ -35,9 +44,6 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     body: form,
   });
 
-  if (!up.ok) {
-    return res.status(up.status).send(await up.text());
-  }
-
+  if (!up.ok) return res.status(up.status).send(await up.text());
   res.status(200).json(await up.json());
 }
