@@ -21,6 +21,7 @@ async function realUploadVoiceProfile(
   blob: Blob
 ): Promise<{ voiceId: string }> {
   const base64 = await blobToBase64(blob);
+  console.log(API_BASE);
   const res = await fetch(`${API_BASE}/api/ivc-create`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
