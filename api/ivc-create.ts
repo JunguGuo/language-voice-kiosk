@@ -6,13 +6,15 @@ const KEY = process.env.ELEVENLABS_API_KEY!;
 if (!KEY) throw new Error("Missing ELEVENLABS_API_KEY");
 
 export default async function handler(req: any, res: any) {
-  // CORS / preflight
+  // CORS / preflight support (same headers on all responses)
   res.setHeader("Access-Control-Allow-Origin", "*");
   res.setHeader("Access-Control-Allow-Headers", "Content-Type");
   res.setHeader("Access-Control-Allow-Methods", "POST, OPTIONS");
+
   if (req.method === "OPTIONS") return res.status(204).end();
   if (req.method !== "POST") return res.status(405).end("Method Not Allowed");
 
+  // Body may arrive as string or object depending on runtime
   const body =
     typeof req.body === "string" ? JSON.parse(req.body) : req.body ?? {};
   const { name, description, labels, removeBackgroundNoise, files } = body;
@@ -31,11 +33,11 @@ export default async function handler(req: any, res: any) {
     form.append("remove_background_noise", String(removeBackgroundNoise));
   }
 
+  // Node 18 has Blob; pass filename via 3rd arg
   for (const f of files) {
     const bytes = Buffer.from(f.base64, "base64");
-    // Node 18+ has Blob; File is not required by ElevenLabs here
     const blob = new Blob([bytes], { type: f.contentType || "audio/mpeg" });
-    form.append("files", blob, f.filename || "sample.mp3"); // filename via 3rd arg
+    form.append("files", blob, f.filename || "sample.mp3");
   }
 
   const up = await fetch(`${ELEVEN}/voices/ivc/create`, {
@@ -44,6 +46,10 @@ export default async function handler(req: any, res: any) {
     body: form,
   });
 
-  if (!up.ok) return res.status(up.status).send(await up.text());
+  if (!up.ok) {
+    const msg = await up.text().catch(() => "ivc create failed");
+    return res.status(up.status).send(msg);
+  }
+
   res.status(200).json(await up.json());
 }
