@@ -24,6 +24,7 @@ async function realUploadVoiceProfile(
 
   const res = await fetch(`${API_BASE}/api/ivc-create`, {
     method: "POST",
+    credentials: "include",
     body: form, // <- no JSON, just FormData; send as multipart
   });
 
@@ -59,6 +60,7 @@ async function realSynthesize(opts: {
     headers: {
       "Content-Type": "application/json",
     },
+    credentials: "include",
     body: JSON.stringify({
       voiceId: opts.voiceId,
       text: opts.text,
