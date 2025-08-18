@@ -52,6 +52,7 @@ export default function Record() {
   async function finish() {
     if (!blob) return;
     const { voiceId } = await uploadVoiceProfile(blob);
+    console.log("Setting voice id: " + voiceId);
     setVoiceId(voiceId);
     nav("/ready");
   }

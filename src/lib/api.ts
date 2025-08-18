@@ -34,7 +34,7 @@ async function realUploadVoiceProfile(
   }
   const data = await res.json(); // { voice_id, ... }
   console.log("ivc-create response:", data);
-  return { voiceId: data.voice_id };
+  return { voiceId: data.voiceId };
 }
 
 // (Optional) If you want a real list, you can still hardcode or fetch from your backend.

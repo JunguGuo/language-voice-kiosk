@@ -8,7 +8,7 @@ export default function StartWithVoice() {
   const { setVoiceId } = useApp();
 
   function useDefaultVoice() {
-    setVoiceId("ETWrQu2KsluuffwhxxCY");
+    setVoiceId("D2nPIIVVfOgcG7nmHQom");
     nav("/languages");
   }
 

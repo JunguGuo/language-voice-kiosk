@@ -10,6 +10,7 @@ export default function Working() {
 
   useEffect(() => {
     async function go() {
+      console.log("voiceID: " + voiceId + "| languageCode: " + languageCode);
       if (!voiceId || !languageCode) {
         nav("/");
         return;
