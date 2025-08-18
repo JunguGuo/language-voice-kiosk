@@ -7,6 +7,7 @@ const KEY = process.env.ELEVENLABS_API_KEY!;
 if (!KEY) throw new Error("Missing ELEVENLABS_API_KEY");
 
 export default async function handler(req: any, res: any) {
+  console.log("📥 ivc-create hit with method:", req.method);
   // CORS / preflight support (same headers on all responses)
   res.setHeader("Access-Control-Allow-Origin", "*");
   res.setHeader("Access-Control-Allow-Headers", "Content-Type");
