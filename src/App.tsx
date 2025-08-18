@@ -21,7 +21,7 @@ import { useKioskIdle } from "./hooks/useKioskIdle";
 
 function AnimatedRoutes() {
   const location = useLocation();
-  useKioskIdle(30);
+  useKioskIdle(120);
   return (
     <AnimatePresence mode="wait">
       <Routes location={location} key={location.pathname}>
