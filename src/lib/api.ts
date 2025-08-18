@@ -7,40 +7,32 @@ const USE_MOCKS =
 
 export type Language = { code: string; name: string; samplePhrases?: string[] };
 
-// ---------- ElevenLabs-backed REAL implementations (via Vercel API routes) ----------
-async function blobToBase64(b: Blob): Promise<string> {
-  const buf = await b.arrayBuffer();
-  let bin = "";
-  const bytes = new Uint8Array(buf);
-  for (let i = 0; i < bytes.length; i++) bin += String.fromCharCode(bytes[i]);
-  return btoa(bin);
-}
-
 // Create a voice clone by proxying to /api/ivc-create (which talks to ElevenLabs)
 async function realUploadVoiceProfile(
   blob: Blob
 ): Promise<{ voiceId: string }> {
-  const base64 = await blobToBase64(blob);
   console.log("API_BASE is", API_BASE);
+
+  const form = new FormData();
+  form.append("name", "Kiosk Voice");
+  form.append(
+    "files",
+    new File([blob], "sample.webm", { type: blob.type || "audio/webm" })
+  );
+  // form.append("labels", "Language Kiosk");
+  // form.append("removeBackgroundNoise", "true");
+
   const res = await fetch(`${API_BASE}/api/ivc-create`, {
     method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({
-      name: "Kiosk Voice",
-      files: [
-        {
-          base64,
-          filename: "sample.webm",
-          contentType: blob.type || "audio/webm",
-        },
-      ],
-      labels: "Language Kiosk",
-      removeBackgroundNoise: true,
-      // optional: description, labels, removeBackgroundNoise
-    }),
+    body: form, // <- no JSON, just FormData; send as multipart
   });
-  if (!res.ok) throw new Error(`Failed to create voice clone: ${res.status}`);
+
+  if (!res.ok) {
+    const msg = await res.text();
+    throw new Error(`Failed to create voice clone: ${res.status} ${msg}`);
+  }
   const data = await res.json(); // { voice_id, ... }
+  console.log("ivc-create response:", data);
   return { voiceId: data.voice_id };
 }
 
@@ -64,17 +56,24 @@ async function realSynthesize(opts: {
 }): Promise<Blob> {
   const res = await fetch(`${API_BASE}/api/tts`, {
     method: "POST",
-    headers: { "Content-Type": "application/json" },
+    headers: {
+      "Content-Type": "application/json",
+    },
     body: JSON.stringify({
       voiceId: opts.voiceId,
       text: opts.text,
-      // optional: modelId, outputFormat, voiceSettings
+      modelId: "eleven_multilingual_v2", // optional, but good default
+      outputFormat: "mp3_44100_128", // optional, backend already defaults
     }),
   });
-  if (!res.ok) throw new Error("Synthesis failed");
-  return await res.blob();
-}
 
+  if (!res.ok) {
+    const errText = await res.text();
+    throw new Error(`Synthesis failed: ${res.status} ${errText}`);
+  }
+  console.log("Synthesis done!");
+  return await res.blob(); // 🔊 audio blob
+}
 // Streaming synth helper (if you want sub-second start; feed res.body to your player)
 export async function synthesizeStream(opts: {
   text: string;
@@ -144,5 +143,6 @@ async function mockSynthesize(_: {
 export const uploadVoiceProfile = USE_MOCKS
   ? mockUploadVoiceProfile
   : realUploadVoiceProfile;
-export const getLanguages = USE_MOCKS ? mockGetLanguages : realGetLanguages;
+export const getLanguages = mockGetLanguages;
+//export const getLanguages = USE_MOCKS ? mockGetLanguages : realGetLanguages;
 export const synthesize = USE_MOCKS ? mockSynthesize : realSynthesize;
