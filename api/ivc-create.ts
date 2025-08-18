@@ -1,5 +1,6 @@
 // api/ivc-create.ts
 import { Buffer } from "node:buffer";
+export const config = { runtime: "nodejs" };
 
 const ELEVEN = "https://api.elevenlabs.io/v1";
 const KEY = process.env.ELEVENLABS_API_KEY!;
