@@ -8,6 +8,7 @@ import { uploadVoiceProfile } from "../lib/api";
 import { useApp } from "../store/app";
 import { useNavigate } from "react-router-dom";
 import { RecLight } from "../components/RecLight";
+import { PREPARED_SCRIPT } from "../lib/data";
 
 export default function Record() {
   const { status, blob, start, stop, requestPermission, permission, stream } =
@@ -83,7 +84,15 @@ export default function Record() {
               When you’re ready, hit the record button to start recording your
               voice.
             </h2>
+
             <RecLight recording={status === "recording"} />
+          </div>
+
+          <div className="card whitespace-pre-wrap text-lg leading-relaxed">
+            <p className="text-sm text-neutral-400 mb-2">
+              Here’s a script you can read along
+            </p>
+            {PREPARED_SCRIPT}
           </div>
 
           <div className="card">

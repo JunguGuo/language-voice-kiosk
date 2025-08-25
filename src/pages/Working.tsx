@@ -16,10 +16,7 @@ export default function Working() {
         return;
       }
       const blob = await synthesize({
-        text:
-          languageCode === "zh"
-            ? selectedText?.zh ?? "你好"
-            : selectedText?.en ?? "Hello",
+        text: selectedText?.content ?? "",
         languageCode,
         voiceId,
       });

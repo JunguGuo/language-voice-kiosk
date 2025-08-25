@@ -1,6 +1,7 @@
 // src/lib/api.ts
 import { label } from "framer-motion/client";
 import { API_BASE } from "./env";
+import { LANGUAGE_GROUPS } from "../lib/data";
 const USE_MOCKS =
   import.meta.env.VITE_USE_MOCKS === "1" ||
   String(import.meta.env.VITE_USE_MOCKS).toLowerCase() === "true";
@@ -40,13 +41,7 @@ async function realUploadVoiceProfile(
 // (Optional) If you want a real list, you can still hardcode or fetch from your backend.
 // Keeping a tiny static real list here (frontends usually don’t need a backend for this).
 async function realGetLanguages(): Promise<Language[]> {
-  return [
-    { code: "zh", name: "Chinese (Mandarin)" },
-    { code: "es", name: "Spanish" },
-    { code: "fr", name: "French" },
-    { code: "ar", name: "Arabic" },
-    { code: "en", name: "English" },
-  ];
+  return LANGUAGE_GROUPS.map(({ code, name }) => ({ code, name }));
 }
 
 // Generate speech (non-streaming) via /api/tts (which calls ElevenLabs convert)
@@ -107,28 +102,7 @@ async function mockUploadVoiceProfile(_: Blob): Promise<{ voiceId: string }> {
 
 async function mockGetLanguages(): Promise<Language[]> {
   await delay(200);
-  return [
-    {
-      code: "zh",
-      name: "Chinese (Mandarin)",
-      samplePhrases: ["你好，欢迎来到克利夫兰公共图书馆！", "今天天气真好。"],
-    },
-    {
-      code: "es",
-      name: "Spanish",
-      samplePhrases: ["¡Bienvenido a la biblioteca!", "¿Cómo estás?"],
-    },
-    {
-      code: "fr",
-      name: "French",
-      samplePhrases: ["Bonjour et bienvenue à la bibliothèque.", "Ça va ?"],
-    },
-    {
-      code: "ar",
-      name: "Arabic",
-      samplePhrases: ["مرحبًا بكم في المكتبة.", "كيف حالك؟"],
-    },
-  ];
+  return LANGUAGE_GROUPS.map(({ code, name }) => ({ code, name }));
 }
 
 import { beepBlob } from "./mocks";

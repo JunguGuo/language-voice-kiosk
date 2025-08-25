@@ -4,11 +4,11 @@ type AppState = {
   voiceId?: string;
   languageCode?: string;
   lastAudioUrl?: string;
-  selectedText?: { en: string; zh: string };
+  selectedText?: { en: string; content: string };
   setVoiceId: (id: string) => void;
   setLanguage: (code: string) => void;
   setLastAudioUrl: (url?: string) => void;
-  setSelectedText: (t?: { en: string; zh: string }) => void;
+  setSelectedText: (t?: { en: string; content: string }) => void;
   reset: () => void;
 };
 
@@ -21,5 +21,11 @@ export const useApp = create<AppState>((set) => ({
   setLanguage: (languageCode) => set({ languageCode }),
   setLastAudioUrl: (lastAudioUrl) => set({ lastAudioUrl }),
   setSelectedText: (selectedText) => set({ selectedText }),
-  reset: () => set({ voiceId: undefined, languageCode: undefined, lastAudioUrl: undefined, selectedText: undefined }),
+  reset: () =>
+    set({
+      voiceId: undefined,
+      languageCode: undefined,
+      lastAudioUrl: undefined,
+      selectedText: undefined,
+    }),
 }));
